@@ -26,76 +26,84 @@ class UNetConvBlock(nn.Module):
 class UNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1=UNetConvBlock(3,64,64,
+        self.conv1=UNetConvBlock(3,32,32,
                                  kernel_size=3,
                                  stride=1,
                                  padding=1)
-        self.downsample1=nn.Conv2d(64,64,
-                                   kernel_size=3,
-                                   stride=2,
-                                   padding=1)
-        self.conv2=UNetConvBlock(64,128,128,
+        self.down1=nn.MaxPool2d(kernel_size=2,
+                                stride=2)
+        self.conv2=UNetConvBlock(32,64,64,
                                  kernel_size=3,
                                  stride=1,
                                  padding=1)
-        self.downsample2=nn.Conv2d(128,128,
-                                   kernel_size=3,
-                                   stride=2,
-                                   padding=1)
-#       self.conv3=UNetConvBlock(128,256,256,
-#                                 kernel_size=3,
-#                                 stride=1,
-#                                 padding=1)
-#        self.conv4=UNetConvBlock(256,512,512,
-#                                 kernel_size=3,
-#                                 stride=1,
-#                                 padding=1)
-        self.conv5=UNetConvBlock(128,256,256,
+        self.down2=nn.MaxPool2d(kernel_size=2,
+                                stride=2)
+        self.conv3=UNetConvBlock(64,128,128,
                                  kernel_size=3,
                                  stride=1,
                                  padding=1)
-#        self.conv6=UNetConvBlock(1024,512,256,
-#                                 kernel_size=3,
-#                                 stride=1,
-#                                 padding=1)
-#        self.conv7=UNetConvBlock(512,256,256,
-#                                 kernel_size=3,
-#                                 stride=1,
-#                                 padding=1)
-        self.upsample2=nn.Sequential(nn.Conv2d(256,128*4,
-                                               kernel_size=3,
-                                               stride=1,
-                                               padding=1),
-                                     nn.PixelShuffle(2))
-        self.conv8=UNetConvBlock(256,128,128,
+        self.down3=nn.MaxPool2d(kernel_size=2,
+                                stride=2)
+        self.conv4=UNetConvBlock(128,256,256,
                                  kernel_size=3,
                                  stride=1,
                                  padding=1)
-        self.upsample1=nn.Sequential(nn.Conv2d(128,64*4,
-                                               kernel_size=3,
-                                               stride=1,
-                                               padding=1),
-                                     nn.PixelShuffle(2))
-        self.conv9=UNetConvBlock(128,64,64,
+        self.down4=nn.MaxPool2d(kernel_size=2,
+                                stride=2)
+        self.conv5=UNetConvBlock(256,512,512,
                                  kernel_size=3,
                                  stride=1,
                                  padding=1)
-        self.conv10=nn.Conv2d(64,3,
+        self.up4=nn.Sequential(nn.Conv2d(512,256*4,
+                                         kernel_size=1,
+                                         stride=1),
+                               nn.PixelShuffle(2))
+        self.conv6=UNetConvBlock(512,256,256,
+                                 kernel_size=3,
+                                 stride=1,
+                                 padding=1)
+        self.up3=nn.Sequential(nn.Conv2d(256,128*4,
+                                         kernel_size=1,
+                                         stride=1),
+                               nn.PixelShuffle(2))
+        self.conv7=UNetConvBlock(256,128,128,
+                                 kernel_size=3,
+                                 stride=1,
+                                 padding=1)
+        self.up2=nn.Sequential(nn.Conv2d(128,64*4,
+                                         kernel_size=1,
+                                         stride=1),
+                               nn.PixelShuffle(2))
+        self.conv8=UNetConvBlock(128,64,64,
+                                 kernel_size=3,
+                                 stride=1,
+                                 padding=1)
+        self.up1=nn.Sequential(nn.Conv2d(64,32*4,
+                                         kernel_size=1,
+                                         stride=1),
+                               nn.PixelShuffle(2))
+        self.conv9=UNetConvBlock(64,32,32,
+                                 kernel_size=3,
+                                 stride=1,
+                                 padding=1)
+        self.conv10=nn.Conv2d(32,3,
                               kernel_size=1,
                               stride=1)
 
     def forward(self,x):
         left1=self.conv1(x)
-        down_left1=self.downsample1(left1)
+        down_left1=self.down1(left1)
         left2=self.conv2(down_left1)
-        down_left2=self.downsample2(left2)
-#        left3=self.conv3(down_left2)
-#        left4=self.conv4(left3)
-        mid=self.conv5(down_left2)
-#        right4=self.conv6(torch.cat((left4,mid),dim=1))
-#        right3=self.conv7(torch.cat((left3,mid),dim=1))
-        right2=self.conv8(torch.cat((left2,self.upsample2(mid)),dim=1))
-        right1=self.conv9(torch.cat((left1,self.upsample1(right2)),dim=1))
+        down_left2=self.down2(left2)
+        left3=self.conv3(down_left2)
+        down_left3=self.down3(left3)
+        left4=self.conv4(down_left3)
+        down_left4=self.down4(left4)
+        mid=self.conv5(down_left4)
+        right4=self.conv6(torch.cat((left4,self.up4(mid)),dim=1))
+        right3=self.conv7(torch.cat((left3,self.up3(right4)),dim=1))
+        right2=self.conv8(torch.cat((left2,self.up2(right3)),dim=1))
+        right1=self.conv9(torch.cat((left1,self.up1(right2)),dim=1))
         result=self.conv10(right1)
         return result
 

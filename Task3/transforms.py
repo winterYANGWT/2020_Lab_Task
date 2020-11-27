@@ -1,6 +1,19 @@
 import torch
 import torchvision.transforms.functional as F
 import torchvision.transforms as transforms
+from PIL import Image
+
+
+class Resize(object):
+    def __init__(self,size,interpolation=3):
+        super().__init__()
+        self.size=size
+        self.interpolation=interpolation
+
+    def __call__(self,img1,img2):
+        img1=F.resize(img1,self.size,self.interpolation)
+        img2=F.resize(img2,self.size,self.interpolation)
+        return img1,img2
 
 
 class RandomHorizontalFlip(object):
@@ -43,10 +56,12 @@ class Compose(object):
     def __call__(self,img1,img2):
         for t in self.transforms:
             img1,img2=t(img1,img2)
+
         return img1,img2
 
 
-transform_train=Compose([RandomVerticalFlip(),
+transform_train=Compose([Resize((576,288),3),
+                         RandomVerticalFlip(),
                          RandomHorizontalFlip(),
                          ToTensor()])
 transform_test=ToTensor()
