@@ -5,7 +5,7 @@ import torch.backends.cudnn as cudnn
 from tqdm import tqdm
 import config
 import os
-import model
+import models
 import datasets
 import losses
 import metrics
@@ -23,8 +23,8 @@ if __name__=='__main__':
                                                 batch_size=config.BATCH_SIZE)
 
     #load model
-    G=model.UNet().to(config.DEVICE)
-    D=model.PatchDiscriminator().to(config.DEVICE)
+    G=models.UNet().to(config.DEVICE)
+    D=models.PatchDiscriminator().to(config.DEVICE)
     
     #set optimizer
     G_optim=optim.Adam(G.parameters(),
@@ -48,12 +48,12 @@ if __name__=='__main__':
         with tqdm(total=len(train_data),ncols=80) as t:
             t.set_description('epoch: {}/{}'.format(epoch+1,config.EPOCHES))
 
-            for input_img,target_img in train_data_loader:
+            for input_img,real_img in train_data_loader:
                 fake_img=G(input_img)
-                real_pred=D(input_img,target_img)
+                real_pred=D(input_img,real_img)
                 fake_pred=D(input_img,fake_img)
 
-                G_loss=G_criterion(fake_pred,target_img,fake_img)
+                G_loss=G_criterion(fake_pred,real_img,fake_img)
                 G_optim.zero_grad()
                 G_loss.backward()
                 G_optim.step()
@@ -69,5 +69,6 @@ if __name__=='__main__':
                 t.set_postfix(PSNR='{:.6f}'.format(PSNR_meter.get_avg()))
                 t.update(len(input_img))
 
-
+        save_model(G,os.path.join('./Model',str(epoch+1),'G.mdl'))
+        save_model(D,os.path.join('./Model',str(epoch+1),'D.mdl'))
 

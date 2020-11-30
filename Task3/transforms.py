@@ -64,4 +64,10 @@ transform_train=Compose([Resize((576,288),3),
                          RandomVerticalFlip(),
                          RandomHorizontalFlip(),
                          ToTensor()])
-transform_test=ToTensor()
+transform_test=Compose([Resize((576,288),3),
+                        ToTensor()])
+transform_rgb2tensor=transforms.Compose([transforms.Resize((576,288),3),
+                                         transforms.ToTensor()])
+transform_tensor2rgb=transforms.Compose([transforms.ToPILImage(),
+                                         transforms.Resize((600,300),3)])
+
