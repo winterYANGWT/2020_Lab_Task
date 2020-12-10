@@ -60,14 +60,14 @@ class Compose(object):
         return img1,img2
 
 
-transform_train=Compose([Resize((576,288),3),
+transform_train=Compose([Resize((576,576),3),
                          RandomVerticalFlip(),
                          RandomHorizontalFlip(),
                          ToTensor()])
-transform_test=Compose([Resize((576,288),3),
+transform_test=Compose([Resize((576,576),3),
                         ToTensor()])
-transform_rgb2tensor=transforms.Compose([transforms.Resize((576,288),3),
+transform_rgb2tensor=transforms.Compose([transforms.Resize((576,576),3),
                                          transforms.ToTensor()])
 transform_tensor2rgb=transforms.Compose([transforms.ToPILImage(),
-                                         transforms.Resize((600,300),3)])
+                                         transforms.Resize((600,600),3)])
 

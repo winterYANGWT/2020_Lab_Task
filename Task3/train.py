@@ -9,6 +9,7 @@ import models
 import datasets
 import losses
 import metrics
+import utils
 
 
 if __name__=='__main__':
@@ -50,6 +51,7 @@ if __name__=='__main__':
 
             for input_img,real_img in train_data_loader:
                 fake_img=G(input_img)
+                print(fake_img)
                 real_pred=D(input_img,real_img)
                 fake_pred=D(input_img,fake_img)
 
@@ -69,6 +71,7 @@ if __name__=='__main__':
                 t.set_postfix(PSNR='{:.6f}'.format(PSNR_meter.get_avg()))
                 t.update(len(input_img))
 
-        save_model(G,os.path.join('./Model',str(epoch+1),'G.mdl'))
-        save_model(D,os.path.join('./Model',str(epoch+1),'D.mdl'))
+        #save model
+        utils.save_model(G,os.path.join('./Model',str(epoch+1)),'G.mdl')
+        utils.save_model(D,os.path.join('./Model',str(epoch+1)),'D.mdl')
 
