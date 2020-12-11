@@ -170,19 +170,22 @@ def sentence2int(sentence,dictionary):
     return [dictionary.word2index[w] for w in sentence.split(' ')]+[2]
 
 
-def extent_qa_pairs(pa_pairs,dictionary,max_length):
+def extent_qa_pairs(qa_pairs,dictionary,max_length):
     new_qa_pairs=[]
 
-    for pa in pa_pairs:
-        question=pa['question']
-        answer=pa['answer']
-        pa['question_int']=sentence2int(question,dictionary)
-        pa['answer_int']=sentence2int(answer,dictionary)
-        pa['question_int']=pa['question_int']+\
-                           [0]*(max_length-len(pa['question_int']))
-        pa['answer_int']=pa['answer_int']+\
-                         [0]*(max_length-len(pa['answer_int']))
-        new_qa_pairs.append(pa)
+    for qa in qa_pairs:
+        question=qa['question']
+        answer=qa['answer']
+        qa['question_int']=sentence2int(question,dictionary)
+        qa['answer_int']=sentence2int(answer,dictionary)
+        qa['question_len']=len(qa['question_int'])
+        qa['answer_len']=len(qa['answer_int'])
+        qa['question_int']=qa['question_int']+\
+                           [0]*(max_length-qa['question_len'])
+        qa['answer_int']=qa['answer_int']+\
+                         [0]*(max_length-qa['answer_len'])
+        qa['mask']=[1]*qa['answer_len']+[0]*(max_length-qa['answer_len'])
+        new_qa_pairs.append(qa)
 
     return new_qa_pairs
 
@@ -216,7 +219,10 @@ dict_df.to_csv('./Data/Cornell_dictionary.csv',index=False)
 qa_df=pd.DataFrame(columns=['question',
                             'answer',
                             'question_int',
-                            'answer_int'])
+                            'answer_int',
+                            'question_len',
+                            'answer_len',
+                            'mask'])
 qa_df=qa_df.append(qa_pairs,ignore_index=True)
 qa_df.to_csv('./Data/Cornell_qa.csv',index=False)
 
