@@ -55,14 +55,15 @@ if __name__=='__main__':
                 real_pred=D(input_img,real_img)
                 fake_pred=D(input_img,fake_img)
 
-                G_loss=G_criterion(fake_pred,real_img,fake_img)
                 G_optim.zero_grad()
+                D_optim.zero_grad()
+
+                G_loss=G_criterion(fake_pred,real_img,fake_img)
                 G_loss.backward()
                 G_optim.step()
 
                 fake_pred=D(input_img,fake_img.detach())
                 D_loss=D_criterion(real_pred,fake_pred)
-                D_optim.zero_grad()
                 D_loss.backward()
                 D_optim.step()
     
