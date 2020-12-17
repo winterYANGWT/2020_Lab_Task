@@ -36,15 +36,15 @@ class Decoder(nn.Module):
         self.method=method
         self.hidden_size=hidden_size
         self.output_size=output_size
-        self.num_layer=num_layer
+        self.num_layers=num_layers
         self.embedding=nn.Embedding(output_size,hidden_size)
         self.embedding_dropout=nn.Dropout(dropout)
         self.gru=nn.GRU(hidden_size,hidden_size,
-                        num_layer=num_layer,
-                        dropout=(0 if num_layer==1 else dropout))
+                        num_layers=num_layers,
+                        dropout=(0 if num_layers==1 else dropout))
         self.concat=nn.Linear(hidden_size,output_size)
         self.out=nn.Linear(hidden_size,output_size)
-        self.attention=Attention(method)
+        self.attention=Attention(method,hidden_size)
 
 
     def forward(self,input_step,last_hidden,encoder_output):

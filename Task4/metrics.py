@@ -10,7 +10,7 @@ class LossMeter(object):
 
 
     def reset(self):
-        self.value=0
+        self._value=0
         self.sum=0
         self.count=0
 
@@ -18,10 +18,10 @@ class LossMeter(object):
     def update(self,loss,count):
         self.count+=count
         self.sum+=count*loss
-        self.value=self.sum/self.count
+        self._value=self.sum/self.count
 
     
     @property
     def value(self):
-        return self.value
+        return self._value
 
