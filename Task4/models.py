@@ -30,7 +30,8 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self):
+    def __init__(self,output_size,hidden_size,
+                 num_layers,method,dropout=0.1):
         super().__init__()
         self.method=method
         self.hidden_size=hidden_size

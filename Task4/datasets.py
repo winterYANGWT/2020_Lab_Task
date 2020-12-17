@@ -13,7 +13,12 @@ class Dataset(torch.utils.data.Dataset):
         self.index2word=dict_frame.set_index('index')
         self.text_frame=pd.read_csv(text_csv)
         self.transform=transform
-        self.num_word=len(self.word2index)
+        self._num_word=len(self.word2index)
+
+
+    @property
+    def num_word(self):
+        return self._num_word
 
 
     def __len__(self):
