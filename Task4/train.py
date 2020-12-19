@@ -5,6 +5,7 @@ import random
 from tqdm import tqdm
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
+import os
 import config
 import models
 import datasets
@@ -21,18 +22,25 @@ if __name__=='__main__':
     train_data=datasets.Cornell
     train_data_loader=data.DataLoader(dataset=train_data,
                                       batch_size=config.BATCH_SIZE,
-                                      shuffle=True)
+                                      shuffle=True,
+                                      collate_fn=datasets.collate_fn)
 
     #load model
     encoder=models.Encoder(train_data.num_word,512,2,dropout=0.1)
-    decoder=models.Decoder(train_data.num_word,512,2,
-                           'concat',dropout=0.1)
+    decoder=models.Decoder(train_data.num_word,512,2,'dot',dropout=0.1)
+    if config.LOAD==True:
+        utils.load_model(encoder,
+                         os.path.join('./Model',str(config.EPOCH_START)),
+                         'encoder.pth')
+        utils.load_model(decoder,
+                         os.path.join('./Model',str(config.EPOCH_START)),
+                         'decoder.pth')
 
     #set optimizer
     encoder_optim=optim.Adam(encoder.parameters(),
-                             lr=config.LEARNING_RATE)
+                             lr=config.LR)
     decoder_optim=optim.Adam(decoder.parameters(),
-                             lr=config.LEARNING_RATE)
+                             lr=config.LR*5)
 
     #set loss and meter
     criterion=losses.MaskLoss()
@@ -42,20 +50,20 @@ if __name__=='__main__':
     encoder.train()
     decoder.train()
 
-    for epoch in range(config.EPOCH):
+    for epoch in range(config.EPOCH_START,config.EPOCH):
         with tqdm(total=len(train_data),ncols=80) as t:
             t.set_description('epoch: {}/{}'.format(epoch+1,config.EPOCH))
 
-            loss=0
             loss_meter.reset()
 
             for input_seq,input_len,output_seq,output_len,mask in train_data_loader:
                 encoder_optim.zero_grad()
                 decoder_optim.zero_grad()
+                loss=0
                 
                 encoder_output,encoder_hidden=encoder(input_seq,input_len)
 
-                decoder_input=torch.LongTensor([[1 for _ in range(len(input_seq))]])
+                decoder_input=torch.LongTensor([[1 for _ in range(input_seq.size(1))]])
                 decoder_input=decoder_input.to(config.DEVICE)
                 decoder_hidden=encoder_hidden[:decoder.num_layers]
 
@@ -67,7 +75,7 @@ if __name__=='__main__':
                                                           encoder_output)
                     
                     if use_teacher_forcing==True:
-                        decoder_input=output_seq[step]
+                        decoder_input=output_seq[step].view(1,-1)
                     else:
                         _,indices=torch.topk(decoder_output,k=1)
                         decoder_input=indices.permute(1,0).to(config.DEVICE)
@@ -85,7 +93,5 @@ if __name__=='__main__':
                 t.set_postfix(loss='{:.6f}'.format(loss_meter.value))
                 t.update(input_seq.size()[1])
 
-            utils.save_model(encoder,os.path.join('./Model',str(epoch+1),'encoder.pth'))
-            utils.save_model(decoder,os.path.join('./Model',str(epoch+1),'decoder.pth'))
-
-
+            utils.save_model(encoder,os.path.join('./Model',str(epoch+1)),'encoder.pth')
+            utils.save_model(decoder,os.path.join('./Model',str(epoch+1)),'decoder.pth')

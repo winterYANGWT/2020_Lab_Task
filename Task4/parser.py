@@ -197,7 +197,7 @@ parser.load_conversations('./Data/Cornell/movie_conversations.txt')
 parser.extract_conversation()
 
 #filter pairs
-MAX_SENTENCE_LENGTH=15
+MAX_SENTENCE_LENGTH=10
 qa_pairs,dictionary=filter_pairs(parser.qa_pairs,MAX_SENTENCE_LENGTH)
 
 #delete rare word

@@ -53,15 +53,15 @@ class Dataset(torch.utils.data.Dataset):
 
 def collate_fn(batch):
     question_int=torch.stack([item[0] for item in batch]).permute(1,0)
-    question_len=torch.cat([item[1] for item in batch])
+    question_len=torch.tensor([item[1] for item in batch])
     answer_int=torch.stack([item[2] for item in batch]).permute(1,0)
-    answer_len=torch.cat([item[3] for item in batch])
+    answer_len=torch.tensor([item[3] for item in batch])
     max_len=torch.max(answer_len)
     answer_int=answer_int[:max_len,:]
     mask=torch.stack([item[4] for item in batch]).permute(1,0)
     mask=mask[:max_len,:]
     return question_int,question_len,\
-           answer_int,answer_len,mask
+           answer_int,max_len,mask
 
 
 Cornell=Dataset('./Data/Cornell_dictionary.csv','./Data/Cornell_qa.csv',

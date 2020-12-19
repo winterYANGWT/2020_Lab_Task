@@ -19,12 +19,11 @@ class Encoder(nn.Module):
 
     def forward(self,input_seq,input_len,hidden=None):
         embedded=self.embedding(input_seq)
-        packed_seq=rnn.pack_padded_sequence(embedded,input_len)
-        output_seq,hidden=self.gru(packed_sequence,hidden)
+        packed_seq=rnn.pack_padded_sequence(embedded,input_len,enforce_sorted=False)
+        output_seq,hidden=self.gru(packed_seq,hidden)
         padded_seq,_=rnn.pad_packed_sequence(output_seq)
-        output_seq=output_seq[:,:,:self.hidden_size]+\
-                   output_seq[:,:,self.hidden_size:]
-        print(output_seq.size(),hidden.size())
+        output_seq=padded_seq[:,:,:self.hidden_size]+\
+                   padded_seq[:,:,self.hidden_size:]
         return output_seq,hidden
 
 
@@ -42,7 +41,7 @@ class Decoder(nn.Module):
         self.gru=nn.GRU(hidden_size,hidden_size,
                         num_layers=num_layers,
                         dropout=(0 if num_layers==1 else dropout))
-        self.concat=nn.Linear(hidden_size,output_size)
+        self.concat=nn.Linear(hidden_size*2,hidden_size)
         self.out=nn.Linear(hidden_size,output_size)
         self.attention=Attention(method,hidden_size)
 
@@ -52,13 +51,13 @@ class Decoder(nn.Module):
         embedding=self.embedding_dropout(embedding)
         rnn_output,hidden=self.gru(embedding,last_hidden)
         attention_weight=self.attention(rnn_output,encoder_output)
-        context=attention_weights.bmm(encoder_output.permute(1,0))
+        context=attention_weight.bmm(encoder_output.permute(1,0,2))
         rnn_output=rnn_output.squeeze(0)
         context=context.squeeze(1)
         concat_input=torch.cat((rnn_output,context),dim=1)
         concat_output=torch.tanh(self.concat(concat_input))
         output=self.out(concat_output)
-        output=F.softmax(output)
+        output=F.softmax(output,dim=1)
         return output,hidden
 
 
@@ -89,10 +88,10 @@ class Attention(nn.Module):
 
 
     def concat_score(self,hidden,encoder_output):
-        energy=self.attention(torch.cat((
-                                  hidden.expand(
-                                      encoder_output.size(0),-1,-1),
-                                  encoder_output),dim=2)).tanh()
+        concat=torch.cat((hidden.expand(encoder_output.size(0),-1,-1),
+                          encoder_output),
+                         dim=2)
+        energy=torch.tanh(self.attention(concat))
         return torch.sum(self.v*energy,dim=2)
 
 
