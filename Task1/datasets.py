@@ -33,18 +33,19 @@ class Dataset(data.Dataset):
 
         caption_info=self.caption_frame.loc[index,:]
         image_path=caption_info[0]
-        caption_str=caption_info[1::4]
-        caption_int=caption_info[2::4]
-        caption_len=caption_info[3::4]
-        caption_mask=caption_info[4::4]
-
         image=Image.open('image_path').convert('RGB')
+        caption=caption_info[1]
+        caption_int=caption_info[2]
+        caption_len=caption_info[3]
+        caption_mask=caption_info[4]
         
         if self.image_transform!=None:
             image=self.image_transform(image)
 
         if self.text_transform!=None:
-            caption_int,caption_len=self.text_transfrom(caption_int,caption_len,caption_mask)
+            caption_int,caption_len,caption_mask=self.text_transfrom(caption_int,
+                                                                     caption_len,
+                                                                     caption_mask)
 
-        return image,caption_int,caption_len
+        return image,caption_int,caption_len,caption_mask
 
