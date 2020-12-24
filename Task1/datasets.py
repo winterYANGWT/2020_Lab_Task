@@ -59,7 +59,6 @@ def collate_fn(batch):
     caption_mask=torch.stack([item[3] for item in batch]).permute(1,0)
     caption_int=caption_int[:max_len,:]
     caption_mask=caption_mask[:max_len,:]
-    print(image.size(),caption_int.size(),max_len.size(),caption_mask.size())
     return image,caption_int,max_len,caption_mask
 
 
