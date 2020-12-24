@@ -110,7 +110,7 @@ if __name__=='__main__':
     word2int(parser,voc)
     pad_zero(parser)
     process(parser,voc,
-            './Data/Flickr8k',
+            './Data/Flickr8k/Images',
             './Data/Flickr8k_caption.csv',
             './Data/Flickr8k_dictionary.csv')
 
