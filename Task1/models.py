@@ -100,3 +100,30 @@ class Encoder(nn.Module):
         flatten=torch.flatten(img_feature,start_dim=1,end_dim=2)
         return img_feature
     
+
+
+class Decoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+
+
+class Attention(nn.Module):
+    def __init__(self,encoder_hidden_size,decoder_hidden_size):
+        super().__init__()
+        self.v=nn.Parameter(torch.rand(decoder_hidden_size))
+        self.w1=nn.Linear(encoder_hidden_size,decoder_hidden_size)
+        self.w2=nn.Linear(decoder_hidden_size,decoder_hidden_size)
+        self.softmax=nn.Softmax(dim=1)
+
+
+    def forward(self,encoder_output,decoder_hidden):
+        decoder_hidden=decoder_hidden.expand((-1,encoder_output.size(1),-1))
+        energy=self.w1(encoder_hidden)+self.w2(decoder_hidden)
+        energy=self.v*torch.tanh(energy)
+        weight=self.softmax(energy)
+        weight=weight.unsqueeze(1)
+        context=weight.bmm(encoder_output)
+        context=context.squeeze(1)
+        return context
+
