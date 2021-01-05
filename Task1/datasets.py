@@ -43,11 +43,11 @@ class Dataset(data.Dataset):
             image=self.image_transform(image)
 
         if self.text_transform!=None:
-            caption_int,caption_len,caption_mask=self.text_transform(caption_int,
+            caption_int,max_len,caption_mask=self.text_transform(caption_int,
                                                                      caption_len,
                                                                      caption_mask)
 
-        return image,caption_int,caption_len,caption_mask
+        return image,caption_int,max_len,caption_mask
 
 
 
@@ -59,7 +59,7 @@ def collate_fn(batch):
     caption_mask=torch.stack([item[3] for item in batch]).permute(1,0)
     caption_int=caption_int[:max_len,:]
     caption_mask=caption_mask[:max_len,:]
-    return image,caption_int,max_len,caption_mask
+    return image,caption_int,max_len.item(),caption_mask
 
 
 Flickr8k=Dataset('./Data/Flickr8k_caption.csv',
@@ -76,6 +76,7 @@ if __name__=='__main__':
     for i in data_loader:
         for j in i:
             print(j)
+            print(j.size())
 
         print('')
         print('')
