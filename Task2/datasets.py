@@ -1,24 +1,26 @@
 import config
+import utils
 import torch
 import transforms
 from PIL import Image
 import pandas as pd
 
 
-class VOC12(torch.utils.data.Dataset):
+class Dataset(torch.utils.data.Dataset):
     def __init__(self,
-                 image_csv,
-                 annotation_csv,
-                 image_transform=None,
-                 target_transform=None):
+                 image_csv,anno_csv,
+                 image_transform=None,bbox_transform=None,label_transform=None):
         super().__init__()
         self.image_data_frame=pd.read_csv(image_csv)
-        self.annotation_data_frame=pd.read_csv(annotation_csv)
+        self.anno_data_frame=pd.read_csv(anno_csv)
         self.image_transform=image_transform
-        self.target_transform=target_transform
+        self.bbox_transform=bbox_transform
+        self.label_transform=label_transform
+
 
     def __len__(self):
         return len(self.image_data_frame)
+
 
     def __getitem__(self,index):
         if torch.is_tensor(index)==True:
@@ -26,15 +28,21 @@ class VOC12(torch.utils.data.Dataset):
 
         image_path=self.image_data_frame.loc[index,'path']
         image=Image.open(image_path).convert('RGB')
-        targets=self.annotation_data_frame.loc[self.annotation_data_frame['path']==image_path,:].to_dict('records')
+        condition_filter=lambda:self.anno_data_frame.path==image_path
+        annos=self.anno_data_frame.loc[condition_filter(),:].values.tolist()
+        bboxes=[anno[1:5] for anno in annos]
+        labels=[anno[5] for anno in annos]
 
         if self.image_transform!=None:
             image=self.image_transform(image)
 
-        if self.target_transform!=None:
-            targets=self.target_transform(targets)
-        
-        return image,targets
+        if self.bbox_transform!=None:
+            bboxes=self.bbox_transform(bboxes)
+
+        if self.label_transform!=None:
+            labels=self.label_transform(labels)
+
+        return image,bboxes,labels
 
 
 def collate_fn(batch):
@@ -43,21 +51,33 @@ def collate_fn(batch):
     targets=list(targets)
     return images,targets
 
-VOC_LABEL_NAME=('background',
-                'aeroplane','bicycle','bird','boat','bottle',
-                'bus','car','cat','chair','cow',
-                'diningtable','dog','horse','motorbike','person',
-                'pottedplant','sheep','sofa','train','tvmonitor')
 
-VOC12_train=VOC12('./Data/VOC12_train_image.csv',
-                  './Data/VOC12_train_anno.csv',
-                  transforms.transform_train,
-                  transforms.transform_target)
+@utils.variable
+def VOC12_label_name():
+    df=pd.read_csv('./Data/VOC12_dict.csv')
+    df_list=df.values.tolist()
+    l2n={item[0]:item[1] for item in df_list}
+    n2l={item[1]:item[0] for item in df_list}
+    return l2n,n2l
 
-VOC12_val=VOC12('./Data/VOC12_val_image.csv',
-                './Data/VOC12_val_anno.csv',
-                transforms.transform_test,
-                transforms.transform_target)
+
+@utils.variable
+def VOC12_train():
+    return Dataset('./Data/VOC12_train_image.csv',
+                   './Data/VOC12_train_anno.csv',
+                   transforms.transform_img_train,
+                   transforms.transform_bbox,
+                   transforms.transform_label)
+
+@utils.variable
+def VOC12_val():
+    return Dataset('./Data/VOC12_val_image.csv',
+                   './Data/VOC12_val_anno.csv',
+                   transforms.transform_test,
+                   transforms.transform_bbox,
+                   transforms.transform_label)
+
 
 if __name__=='__main__':
     print(VOC12_train[0])
+
